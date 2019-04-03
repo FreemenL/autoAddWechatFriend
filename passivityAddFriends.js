@@ -16,9 +16,10 @@ let dataFilePath = '';
   }).on('login', async user => {
     console.log('登录成功')
     loginUsername = user.payload.name
-    console.log(loginUsername)
     dataFilePath = `${join(__dirname, `./passiveAddFriend/${loginUsername}.json`)}`
-    fs.readFileAsync(dataFilePath).catch(() => fs.writeFile(dataFilePath, '[]', e => console.log(e)))
+    fs.accessAsync(`./passiveAddFriend`).then(res => fs.readFileAsync(dataFilePath).catch(() => fs.writeFile(dataFilePath, '[]', e => console.log(e)))).catch(() => {
+      fs.mkdirAsync(`./passiveAddFriend`)
+    })
     fs.writeFile('loginUser.json', JSON.stringify(user), (err) => {
       if (err) throw err
       console.log('loginUser write OK!')
@@ -26,7 +27,9 @@ let dataFilePath = '';
   }).on('friendship', async friendship => {
     try {
       if (friendship.type() === Friendship.Type.Receive) {
-        setTimeout(async () => {
+        let date = moment().add('1', 'days').add('15', 'hours')
+        schedule.scheduleJob(date, async () => {
+          console.log('The world is going to end today.')
           let contact = friendship.contact()
           await friendship.accept()
           contact.addTime = moment().format('YYYY-MM-DD HH:mm:ss')
@@ -34,7 +37,11 @@ let dataFilePath = '';
           addFriendsArr.push(contact)
           fs.writeFile(dataFilePath, JSON.stringify(addFriendsArr)).then(() => console.log('addFriendsArr write ok'))
         }, 600000)
-        console.log(`添加人：${friendship.contact().name} 好友请求：${friendship.hello()} 请求时间：${moment().format('YYYY-MM-DD HH:mm:ss')}`)
+        console.log(`-------------------------`)
+        console.log(`添加人：${friendship.contact().name} 好友请求：${friendship.hello()} `)
+        console.log(`请求时间：${moment().format('YYYY-MM-DD HH:mm:ss')}`)
+        console.log(`预计添加时间：${moment().format('YYYY-MM-DD HH:mm:ss')}`)
+        console.log(`-------------------------`)
       }
     } catch (err) {
       console.log('加好友的时候出错了')
